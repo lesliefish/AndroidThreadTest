@@ -2,6 +2,7 @@
 // Runs all 3 experiments using pthreads + sched_setaffinity
 // Output: CSV to stdout, parseable by analysis/plot_comparison.py
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -497,7 +498,7 @@ static void run_hybrid_test(const char* platform, int upper_bound, int runs) {
                 sorted[j+1] = key;
             }
             double median = sorted[runs / 2];
-            printf("HYBRID,%d,%.3f,%.3f,%.3f,%.0f\n", total_n, median, mn, mx, 0);
+            printf("HYBRID,%d,%.3f,%.3f,%.3f,%.0f\n", total_n, median, mn, mx, 0.0);
             printf("  HYBRID:    %d threads (%d big + %d little), median=%.3fms\n",
                    total_n, big_n, lit_n, median);
             free(sorted);
