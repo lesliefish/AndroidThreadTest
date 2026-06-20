@@ -14,6 +14,7 @@
 #include <sys/sysinfo.h>
 #include <sys/time.h>
 #include <errno.h>
+#include "native_bench_api.h"
 
 // ─── Thread operations ────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ static void* pthread_wrapper(void* arg) {
     return func(user_arg);
 }
 
-static void* android_thread_create(void* (*func)(void*), void* arg) {
+void* android_thread_create(void (*func)(void*), void* arg) {
     void** wrapped = (void**)malloc(2 * sizeof(void*));
     wrapped[0] = (void*)func;
     wrapped[1] = arg;
@@ -46,14 +47,14 @@ static void* android_thread_create(void* (*func)(void*), void* arg) {
     return (void*)h;
 }
 
-static void android_thread_join(void* handle) {
+void android_thread_join(void* handle) {
     if (!handle) return;
     struct thread_handle* h = (struct thread_handle*)handle;
     pthread_join(h->tid, NULL);
     free(h);
 }
 
-static void android_thread_bind_cpu(int core_id) {
+void android_thread_bind_cpu(int core_id) {
     cpu_set_t mask;
     CPU_ZERO(&mask);
     CPU_SET(core_id, &mask);
@@ -63,11 +64,11 @@ static void android_thread_bind_cpu(int core_id) {
     }
 }
 
-static int android_get_core_count(void) {
+int android_get_core_count(void) {
     return (int)sysconf(_SC_NPROCESSORS_ONLN);
 }
 
-static int* android_get_cluster_map(int* out_count) {
+int* android_get_cluster_map(int* out_count) {
     int count = android_get_core_count();
     int* clusters = (int*)malloc(count * sizeof(int));
     char path[256];
@@ -115,7 +116,7 @@ typedef struct {
     int* result;
 } prime_task_t;
 
-static void* prime_worker(void* arg) {
+void* prime_worker(void* arg) {
     prime_task_t* task = (prime_task_t*)arg;
     int count = 0;
     for (int i = task->lo; i <= task->hi; ++i) {
@@ -133,7 +134,7 @@ typedef struct {
     double throughput_ops, speedup;
 } bench_stats_t;
 
-static bench_stats_t compute_stats(double* timings, int num_runs,
+bench_stats_t compute_stats(double* timings, int num_runs,
                                     double total_ops, double baseline_ms) {
     bench_stats_t s = {0};
     if (num_runs == 0) return s;
@@ -186,7 +187,7 @@ static void prime_run_worker(void* arg) {
     free(handles);
 }
 
-static void run_prime_experiment(const char* platform, int upper_bound, int runs) {
+void run_prime_experiment(const char* platform, int upper_bound, int runs) {
     int core_count = android_get_core_count();
     int thread_counts[] = {1, 2, 4, 6, 8, 12, 16};
     int num_configs = 0;
@@ -247,7 +248,7 @@ static void run_prime_experiment(const char* platform, int upper_bound, int runs
 
 // ─── Experiment 2: Big.LITTLE separation ──────────────────────────
 
-static void run_big_little_test(const char* platform, int upper_bound, int runs) {
+void run_big_little_test(const char* platform, int upper_bound, int runs) {
     int core_count;
     int* clusters = android_get_cluster_map(&core_count);
 
@@ -339,7 +340,7 @@ static void run_big_little_test(const char* platform, int upper_bound, int runs)
 
 // ─── Experiment 3: Hybrid scheduling ──────────────────────────────
 
-static void run_hybrid_test(const char* platform, int upper_bound, int runs) {
+void run_hybrid_test(const char* platform, int upper_bound, int runs) {
     int core_count;
     int* clusters = android_get_cluster_map(&core_count);
 
