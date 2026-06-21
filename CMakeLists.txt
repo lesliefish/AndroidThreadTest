@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.18)
-project(ThreadBenchmark LANGUAGES C)
+project(ThreadBenchmark LANGUAGES CXX)
 
 # ─── Global settings ───────────────────────────────────────────────
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # ─── Shared benchmark primitives ───────────────────────────────────
-# These are inline C functions included by both platform implementations.
-# They contain the pure computation logic (prime counting, etc.)
-# with no platform-specific threading calls.
+# Cross-platform core benchmark logic (prime counting, statistics, experiments)
+# Platform-specific code (threading, CPU binding) is implemented separately.
 
 # ─── Platform: Windows ─────────────────────────────────────────────
 option(BUILD_WINDOWS "Build Windows benchmark" ON)
